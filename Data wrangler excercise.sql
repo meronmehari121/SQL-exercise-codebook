@@ -1,7 +1,14 @@
-/**
-Create sample tables to work with **/
 
-/** Baseline **/
+/** Purpose: Data analayst/wrangler job pre interview SQL Excercise solution sheet
+    SQL dialect : MySQL
+    Author: Meron Kifle
+	Author email: meronmehari121@gmail.com
+    Date  : 5th october 2023 
+	**/
+----------------------------------------------------------------------------------------
+/** Create sample tables to work with the questions**/
+----------------------------------------------------------------------------------------
+/** Baseline table**/
 
 create table Baseline
 (pt_id int, 
@@ -14,7 +21,7 @@ wd_stat int,
 wd_date date
 )
 ----------------------------------------------------------------------------------------
-/** inpatient_main **/
+/** inpatient_main table **/
 
 create table inpatient_main
 (pt_id int, 
@@ -24,7 +31,7 @@ disdate date,
 batch int
 )
 ----------------------------------------------------------------------------------------
-/**inpatient_diag **/
+/**inpatient_diag table**/
 
 create table inpatient_diag
 (record_id int,
@@ -67,66 +74,128 @@ values
 ----------------------------------------------------------------------------------------
 /** Question # (1)
 (a) List the pt_id & surname of all participants, in alphabetical order by surname.
-(b) As (a) but only for participants who have not withdrawn from the study. **/-- Solution for  a) select pt_id, snamefrom Baselineorder by sname-- Solution for b)select pt_id, sname,wd_statfrom Baselinewhere wd_stat = 0order by sname;----------------------------------------------------------------------------------------/** Question # (2)
+(b) As (a) but only for participants who have not withdrawn from the study. 
+**/
+
+-- Solution for  1a) 
+select pt_id, sname
+from Baseline
+order by sname  
+
+-- Solution for 1b)
+select pt_id, sname,wd_stat
+from Baseline
+where wd_stat = 0
+order by sname;
+----------------------------------------------------------------------------------------
+/** Question # (2)
 (a) Find the date of birth of the oldest participant(s).
-(b) Find the numbers of unwithdrawn male and female participants in the baseline table. **/-- Solution for  a) select MIN(dob) as oldest_dob
-from Baseline;-- Solution for b)select  case
+(b) Find the numbers of unwithdrawn male and female participants in the baseline table. 
+**/
+
+-- Solution for  2a) 
+select min(dob) as oldest_dob
+from Baseline;
+
+-- Solution for 2b)
+select  case
         when sex = 0 then 'Female'
         when sex = 1 then 'Male'
     end as Sex
-	, COUNT(*) as CountofUnwithdrawnParticipants
+	, count(sex) as CountOfUnwithdrawnParticipants
 from Baseline 
 where wd_stat = 0
 group by sex;
 
-----------------------------------------------------------------------------------------/** Question # (3)
+----------------------------------------------------------------------------------------
+/** Question # (3)
 (a) Find how many unwithdrawn participants do not have any inpatient admissions.
-(b) Find how many unwithdrawn participants have not had any inpatient admissions since the start of 2018.**/-- Solution for  a) -- step 1: join Baseline and Inpatient tables select *
+(b) Find how many unwithdrawn participants have not had any inpatient admissions since the start of 2018.
+**/
+
+-- Solution for  3a) 
+-- step 1: join Baseline and Inpatient tables 
+select *
 from Baseline
 LEFT JOIN inpatient_main
-on Baseline.pt_id = inpatient_main.pt_id;-- step 2: count wd_stat values by non null values of pt_idselect count(*) as  EmptyInpatientDatafrom Baselineleft join inpatient_mainon Baseline.pt_id = inpatient_main.pt_id where Baseline.wd_stat = 0 and wd_date is not null;-- Solution for  b)-- step 1: join Baseline and Inpatient tables since 2018select *from Baselineleft join (
-    select *
-    from inpatient_main
-    where admidate >= '2018-01-01'
-) as inpatient_since_2018on Baseline.pt_id = inpatient_since_2018.pt_id ;-- step 2: count wd_stat values by non null values of pt_idselect count(*) as  EmptyInpatientDataSince2018from Baselineleft join (
-    select *
-    from inpatient_main
-    where admidate >= '2018-01-01'
-) as inpatient_since_2018on Baseline.pt_id = inpatient_since_2018.pt_id where Baseline.wd_stat = 0 and inpatient_since_2018.pt_id is  null;----------------------------------------------------------------------------------------/** Question # (4)
+on Baseline.pt_id = inpatient_main.pt_id;
+
+-- step 2: count wd_stat values by  null values of pt_id
+select count(*) as  EmptyInpatientData
+from Baseline
+left join inpatient_main
+on Baseline.pt_id = inpatient_main.pt_id 
+where Baseline.wd_stat = 0 and 
+inpatient_main.pt_id is null
+;
+
+-- Solution for  3b)
+select count(*) as  EmptyInpatientDataSince2018
+from Baseline
+left join inpatient_main
+on Baseline.pt_id = inpatient_main.pt_id 
+where Baseline.wd_stat = 0 and
+      admidate >= '2018-01-01' and 
+      inpatient_main.pt_id is null
+;
+
+----------------------------------------------------------------------------------------
+/** Question # (4)
 (a) Find the earliest and latest admission dates for all records contained in 
 any of the batches 100234,  100457,    100666 in the inpatient_main table.
 
 (b) Find the number of distinct participants with an inpatient record with ICD-10 code K41.3 as the primary diagnosis.
 
-(c) For each of the individual ICD-10 codes that start K41, find the number of distinct participants having an inpatient record containing that diagnosis code as either a primary or secondary diagnosis.**/-- Solution for  a) select *from inpatient_main ;select 
+(c) For each of the individual ICD-10 codes that start K41, find the number of distinct participants having an inpatient record containing that 
+diagnosis code as either a primary or secondary diagnosis.
+**/
+-- Solution for  4a) 
+select *
+from inpatient_main ;
+
+select 
     min(admidate) as EarliestAdmissionDate,
     max(admidate) as LatestAdmissionDate
 from inpatient_main
-where batch IN (100234, 100457, 100666);-- Solution for  b)select *from inpatient_diag ;select 
+where batch IN (100234, 100457, 100666);
+
+-- Solution for  4b)
+select *
+from inpatient_diag ;
+
+select 
 count(distinct record_id) as CountOfDistinctParticipants
 from inpatient_diag
 where diag_icd10 = 'K41.3';
--- Solution for c)select
+
+-- Solution for 4c)
+select
     count(distinct record_id) as CountOfDistinctParticipants
 from inpatient_diag
 where diag_icd10 LIKE 'K41%'
-group by level;----------------------------------------------------------------------------------------/** Question # (5)
+group by level;
+----------------------------------------------------------------------------------------
+/** Question # (5)
 The participant with pt_id = 113573147 has withdrawn from the study on  02/04/2021.
 (a) Update the baseline table accordingly.
 (b) Remove all records from the inpatient_main and inpatient_diag tables that pertain to this participant.
-**/-- Solution for  a) update Baseline
+**/
+-- Solution for  5a) 
+update Baseline
 set wd_stat = 1, wd_date = '2021-02-04'
 where pt_id = 113573147;
 
--- Solution for  b)
+-- Solution for  5b)
+-- remove patient records from the inpatient_main table
 delete from inpatient_main
 where pt_id = 113573147;
 
-
+-- remove patient records from the inpatient_diag table
 delete from inpatient_diag
 where record_id IN (select record_id from inpatient_main where pt_id = 113573147);
 
-----------------------------------------------------------------------------------------/** Question # (6)
+----------------------------------------------------------------------------------------
+/** Question # (6)
 Insert rows into the inpatient_main & inpatient_diag tables that record the following hospital admission:
 pt_id = 122334455
 record_id = 6714354
@@ -134,19 +203,22 @@ admission_date = 23/01/2021
 discharge_date = 25/01/2021
 record_batch = 100731
 Primary diagnosis code: D61.3
-Secondary diagnoses codes: D59.5, F32.2 (in that order)**/-- Solution select *from inpatient_main ;insert into inpatient_main (pt_id, record_id, admidate, disdate, batch)
+Secondary diagnoses codes: D59.5, F32.2 (in that order)
+**/
+
+-- Solution 
+-- update inpatient_main records with new data
+insert into inpatient_main (pt_id, record_id, admidate, disdate, batch)
 values (122334455, 6714354, '2021-01-23', '2021-01-25', 100731);
 
-
-select *from inpatient_diag ;
+-- update inpatient_diag records with new data
 insert into inpatient_diag (record_id, arr_index, level, diag_icd10)
 values (6714354, 0, 1, 'D61.3');
 
-
+-- update inpatient_diag records with new data
 insert into inpatient_diag (record_id, arr_index, level, diag_icd10)
 values (6714354, 2, 2, 'D59.5'),
        (6714354, 2, 2, 'F32.2');
-
 ----------------------------------------------------------------------------------------
                                      -- END --
 ----------------------------------------------------------------------------------------
