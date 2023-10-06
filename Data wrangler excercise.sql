@@ -1,5 +1,5 @@
 
-/** Purpose: Data analayst/wrangler job pre interview SQL Excercise solution sheet
+/** Purpose:  SQL Excercise solution sheet
     SQL dialect : MySQL
     Author: Meron Kifle
 	Author email: meronmehari121@gmail.com
